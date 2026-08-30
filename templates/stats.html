@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สถิติรายเดือน — {{ site['name'] }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+  * { font-family:'Kanit', sans-serif; margin:0; padding:0; box-sizing:border-box; }
+  :root{ --green:#2d6a4f; --green-dark:#1b4332; --gold:#c9a227; --cream:#f6faf5; --ink:#26312b; --muted:#8aa093; }
+  body { background:var(--cream); color:var(--ink); }
+  .top { background:linear-gradient(135deg,#1b4332 0%,#2d6a4f 80%); color:#fff; padding:20px 26px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .top .sub { letter-spacing:1px; font-size:12px; color:rgba(255,255,255,.7); text-transform:uppercase; }
+  .top h1 { font-family:'Playfair Display', serif; font-size:22px; font-weight:600; }
+  .top a { color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.35); padding:7px 16px; border-radius:30px; font-size:13px; }
+  .wrap { padding:24px; max-width:1050px; margin:0 auto; }
+  .bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .bar input[type=month] { padding:9px 13px; border:1px solid #d8e4da; border-radius:12px; font-family:'Kanit'; font-size:14px; background:#fff; }
+  .btn { padding:9px 18px; border:none; border-radius:12px; font-family:'Kanit'; font-size:13.5px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
+  .btn-green { background:linear-gradient(135deg,var(--green),var(--green-dark)); color:#fff; }
+  .btn-out { background:#fff; border:1.5px solid var(--green); color:var(--green-dark); }
+
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:18px; }
+  .card { background:#fff; border:1px solid #e4efe6; border-radius:16px; padding:15px 16px; box-shadow:0 3px 12px rgba(35,80,50,.05); }
+  .card .l { font-size:12px; color:var(--muted); }
+  .card .v { font-size:25px; font-weight:700; font-family:'Playfair Display', serif; color:var(--green-dark); }
+  .card .v small { font-size:12px; color:var(--muted); font-weight:500; }
+
+  .box { background:#fff; border:1px solid #e4efe6; border-radius:18px; padding:18px 20px; box-shadow:0 3px 14px rgba(35,80,50,.06); margin-bottom:16px; }
+  .box h3 { font-size:15px; margin-bottom:12px; color:var(--green-dark); }
+  canvas { width:100%; height:auto; background:#fff; border-radius:12px; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th, td { padding:8px 10px; text-align:left; border-bottom:1px solid #eef4ef; }
+  th { color:var(--muted); font-weight:600; font-size:11.5px; }
+  .empty { text-align:center; color:var(--muted); padding:28px; }
+  @media (max-width:640px){ .wrap{ padding:14px; } .top{ padding:15px 18px; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <div class="sub">🌱 Smart Farm · {{ site['name'] }}</div>
+    <h1>สถิติรายเดือน</h1>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a href="/site/{{ site['id'] }}">📊 Dashboard</a>
+    <a href="/">🏠 โรงเรือน</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="bar">
+    <form method="GET" style="display:flex;gap:10px;align-items:center">
+      <input type="month" name="month" value="{{ month }}">
+      <button class="btn btn-green" type="submit">ดูสถิติ</button>
+    </form>
+    <a class="btn btn-out" href="/site/{{ site['id'] }}/stats.csv?month={{ month }}">⬇️ Export CSV</a>
+  </div>
+
+  {% if summary and summary['n'] %}
+  <div class="cards">
+    <div class="card"><div class="l">🌡️ อุณหภูมิเฉลี่ย</div><div class="v">{{ summary['t_avg'] }}<small>°C</small></div></div>
+    <div class="card"><div class="l">🔥 สูงสุด</div><div class="v">{{ summary['t_max'] }}<small>°C</small></div></div>
+    <div class="card"><div class="l">❄️ ต่ำสุด</div><div class="v">{{ summary['t_min'] }}<small>°C</small></div></div>
+    <div class="card"><div class="l">💧 ความชื้นเฉลี่ย</div><div class="v">{{ summary['h_avg'] }}<small>%</small></div></div>
+    <div class="card"><div class="l">🪴 ดินเฉลี่ย</div><div class="v">{{ summary['s_avg'] }}<small>%</small></div></div>
+    <div class="card"><div class="l">☀️ แสงเฉลี่ย</div><div class="v">{{ summary['l_avg'] }}<small>lux</small></div></div>
+    <div class="card"><div class="l">📦 ข้อมูลทั้งหมด</div><div class="v">{{ summary['n'] }}<small> จุด</small></div></div>
+  </div>
+
+  <div class="box">
+    <h3>📈 อุณหภูมิรายวัน (เฉลี่ย/สูงสุด/ต่ำสุด)</h3>
+    <canvas id="chart" width="900" height="300"></canvas>
+  </div>
+
+  <div class="box">
+    <h3>📋 ตารางรายวัน ({{ days|length }} วัน)</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <tr><th>วันที่</th><th>อุณหภูมิเฉลี่ย</th><th>สูงสุด</th><th>ต่ำสุด</th><th>ความชื้น</th><th>ดิน</th><th>แสง</th><th>จุด</th></tr>
+      {% for d in days %}
+      <tr><td><b>{{ d['date'] }}</b></td><td>{{ d['temp_avg'] }}°C</td><td>{{ d['temp_max'] }}°</td><td>{{ d['temp_min'] }}°</td><td>{{ d['hum_avg'] }}%</td><td>{{ d['soil_avg'] }}%</td><td>{{ d['light_avg'] }}</td><td>{{ d['n'] }}</td></tr>
+      {% endfor %}
+    </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="box"><div class="empty">📭 ไม่มีข้อมูลในเดือนนี้ ({{ month }})<br>รอข้อมูลจากเซ็นเซอร์ หรือเลือกเดือนอื่น</div></div>
+  {% endif %}
+</div>
+
+{% if days %}
+<script>
+  const days = {{ days | tojson }};
+  const cv = document.getElementById('chart'), ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height, pad = 34;
+  const mx = Math.max(...days.map(d => +d.temp_max)), mn = Math.min(...days.map(d => +d.temp_min));
+  const range = (mx - mn) || 1;
+  const X = i => pad + i * (W - pad*2) / Math.max(days.length-1, 1);
+  const Y = v => H - pad - (v - mn) / range * (H - pad*2);
+  ctx.strokeStyle = '#e8efe9'; ctx.lineWidth = 1;
+  for(let i=0;i<5;i++){ const y = pad + i*(H-pad*2)/4; ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke(); }
+  const lines = [['temp_avg','#2d6a4f',2.6],['temp_max','#e74c3c',1.8],['temp_min','#2980b9',1.8]];
+  lines.forEach(([k,col,w]) => {
+    ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath();
+    days.forEach((d,i) => i ? ctx.lineTo(X(i),Y(+d[k])) : ctx.moveTo(X(i),Y(+d[k])));
+    ctx.stroke();
+  });
+  ctx.fillStyle = '#8aa093'; ctx.font = '11px Kanit';
+  lines.forEach(([k,col],i) => { ctx.fillStyle = col; ctx.fillRect(pad, 8 + i*16, 10, 10); ctx.fillStyle = '#8aa093'; ctx.fillText({temp_avg:'เฉลี่ย',temp_max:'สูงสุด',temp_min:'ต่ำสุด'}[k], pad+14, 17 + i*16); });
+  // label วันที่ (ทุก ~7 วัน)
+  ctx.fillStyle = '#8aa093'; ctx.font = '10px Kanit'; ctx.textAlign = 'center';
+  days.forEach((d,i) => { if(i % Math.ceil(days.length/8) === 0) ctx.fillText(d.date.slice(5), X(i), H - pad + 14); });
+</script>
+{% endif %}
+</body>
+</html>

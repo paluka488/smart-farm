@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Farm — {{ 'โหมดจำลอง' if sim else 'โรงเรือน' }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+  * { font-family:'Kanit', sans-serif; margin:0; padding:0; box-sizing:border-box; }
+  :root{ --green:#2d6a4f; --green-dark:#1b4332; --green-soft:#d8f3dc; --gold:#c9a227; --cream:#f6faf5; --ink:#26312b; --muted:#8aa093; }
+  body { background:var(--cream); color:var(--ink); }
+  .top { background:linear-gradient(135deg,#1b4332 0%,#2d6a4f 80%); color:#fff; padding:18px 26px;
+         display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .top h1 { font-family:'Playfair Display', serif; font-size:22px; font-weight:600; }
+  .top .sub { font-size:12.5px; color:rgba(255,255,255,.7); letter-spacing:1px; text-transform:uppercase; }
+  .sim-badge { background:rgba(255,215,0,.18); border:1px solid rgba(255,215,0,.4); color:#ffe9a8;
+               padding:6px 16px; border-radius:30px; font-size:13px; font-weight:600; }
+
+  .wrap { padding:22px 26px; max-width:1150px; margin:0 auto; }
+
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
+  .card { background:#fff; border:1px solid #e4efe6; border-radius:18px; padding:18px 20px; box-shadow:0 3px 14px rgba(35,80,50,.06); position:relative; overflow:hidden; }
+  .card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--green),var(--gold)); }
+  .card .ic { font-size:24px; }
+  .card .v { font-size:34px; font-weight:700; font-family:'Playfair Display', serif; color:var(--green-dark); margin-top:4px; }
+  .card .v small { font-size:16px; color:var(--muted); font-weight:500; }
+  .card .l { color:var(--muted); font-size:12.5px; margin-top:2px; }
+
+  .row { display:grid; grid-template-columns:1.6fr 1fr; gap:16px; }
+  @media(max-width:820px){ .row{ grid-template-columns:1fr; } }
+  .box { background:#fff; border:1px solid #e4efe6; border-radius:18px; padding:18px 20px; box-shadow:0 3px 14px rgba(35,80,50,.06); }
+  .box h3 { font-size:15px; margin-bottom:12px; color:var(--green-dark); }
+
+  .ctl { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .ctl .c { text-align:center; background:#f8fcf8; border:1px solid #e4efe6; border-radius:16px; padding:18px 10px; }
+  .ctl .c .ic { font-size:30px; }
+  .ctl .c .nm { font-size:14px; margin-top:4px; color:var(--muted); }
+  .btn { display:inline-block; margin-top:10px; padding:9px 18px; border-radius:12px; border:none; font-family:'Kanit';
+         font-size:13.5px; font-weight:600; cursor:pointer; width:100%; transition:.15s; }
+  .btn.on { background:linear-gradient(135deg,var(--green),var(--green-dark)); color:#fff; }
+  .btn.off { background:#e9f0ea; color:var(--muted); }
+  .btn:hover { transform:translateY(-1px); }
+
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th, td { padding:8px 10px; text-align:left; border-bottom:1px solid #eef4ef; }
+  th { color:var(--muted); font-weight:600; font-size:12px; }
+  .t-green { color:var(--green); font-weight:600; }
+  .last-up { color:var(--muted); font-size:12px; margin-top:8px; text-align:right; }
+
+  @media (max-width:640px){ .wrap{ padding:14px; } .top{ padding:14px 16px; } .top h1{ font-size:18px; } .ctl{ gap:8px; } .ctl .c{ padding:14px 6px; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <div class="sub">🌱 Smart Farm · {{ site['name'] }}</div>
+    <h1>ระบบควบคุมโรงเรือนผัก</h1>
+  </div>
+  {% if sim %}<span class="sim-badge">🧪 โหมดจำลอง (Simulation)</span>{% endif %}
+  <div style="display:flex;gap:8px">
+    <a href="/site/{{ site['id'] }}/stats" style="color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:7px 16px;border-radius:30px;font-size:13px">📊 สถิติ</a>
+    <a href="/" style="color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:7px 16px;border-radius:30px;font-size:13px">🏠 โรงเรือน</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="cards">
+    <div class="card"><div class="ic">🌡️</div><div class="v" id="v-temp">{{ last['temp'] if last else '-' }}<small>°C</small></div><div class="l">อุณหภูมิอากาศ</div></div>
+    <div class="card"><div class="ic">💧</div><div class="v" id="v-hum">{{ last['hum'] if last else '-' }}<small>%</small></div><div class="l">ความชื้นอากาศ</div></div>
+    <div class="card"><div class="ic">🪴</div><div class="v" id="v-soil">{{ last['soil'] if last else '-' }}<small>%</small></div><div class="l">ความชื้นดิน</div></div>
+    <div class="card"><div class="ic">☀️</div><div class="v" id="v-light">{{ last['light'] if last else '-' }}<small>lux</small></div><div class="l">แสง</div></div>
+  </div>
+
+  <div class="row">
+    <div class="box">
+      <h3>📈 กราฟย้อนหลัง (120 จุด)</h3>
+      <canvas id="chart" width="720" height="300" style="width:100%;height:auto;background:#fff;border-radius:12px"></canvas>
+    </div>
+    <div class="box">
+      <h3>🎛️ ควบคุมอุปกรณ์</h3>
+      <div class="ctl">
+        <div class="c"><div class="ic">🚿</div><div class="nm">ปั๊มน้ำ</div>
+          <button class="btn {{ 'on' if ctl['pump'] else 'off' }}" id="b-pump" onclick="toggle('pump')">{{ 'เปิด' if ctl['pump'] else 'ปิด' }}</button></div>
+        <div class="c"><div class="ic">🌀</div><div class="nm">พัดลม</div>
+          <button class="btn {{ 'on' if ctl['fan'] else 'off' }}" id="b-fan" onclick="toggle('fan')">{{ 'เปิด' if ctl['fan'] else 'ปิด' }}</button></div>
+        <div class="c"><div class="ic">💡</div><div class="nm">ไฟปลูก</div>
+          <button class="btn {{ 'on' if ctl['light'] else 'off' }}" id="b-light" onclick="toggle('light')">{{ 'เปิด' if ctl['light'] else 'ปิด' }}</button></div>
+      </div>
+
+      <h3 style="margin-top:22px">🕒 ข้อมูลล่าสุด</h3>
+      <table>
+        <tr><th>เวลา</th><th>°C</th><th>ความชื้น</th><th>ดิน</th><th>แสง</th></tr>
+        {% for r in history %}
+        <tr><td class="t-green">{{ r['t'] }}</td><td>{{ r['temp'] }}</td><td>{{ r['hum'] }}%</td><td>{{ r['soil'] }}%</td><td>{{ r['light'] }}</td></tr>
+        {% endfor %}
+      </table>
+      <div class="last-up" id="last-up"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let ctl = {{ ctl | tojson }};
+  function setBtn(k, v){
+    const b = document.getElementById('b-' + k);
+    b.textContent = v ? 'เปิด' : 'ปิด';
+    b.className = 'btn ' + (v ? 'on' : 'off');
+  }
+  async function toggle(k){
+    ctl[k] = ctl[k] ? 0 : 1;
+    setBtn(k, ctl[k]);
+    await fetch('/api/control', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({[k]: ctl[k], site: {{ site['id'] }}})});
+  }
+  async function refresh(){
+    try{
+      const r = await fetch('/api/history?site={{ site['id'] }}'); const d = await r.json();
+      if(d.length){
+        const last = d[d.length-1];
+        document.getElementById('v-temp').innerHTML = last.temp + '<small>°C</small>';
+        document.getElementById('v-hum').innerHTML = last.hum + '<small>%</small>';
+        document.getElementById('v-soil').innerHTML = last.soil + '<small>%</small>';
+        document.getElementById('v-light').innerHTML = last.light + '<small>lux</small>';
+        document.getElementById('last-up').textContent = 'อัปเดต: ' + new Date().toLocaleTimeString('th-TH');
+        drawChart(d);
+        // reload control state
+        const rc = await fetch('/api/control?site={{ site['id'] }}'); const c = await rc.json();
+        for(const k of ['pump','fan','light']) setBtn(k, c[k]);
+      }
+    }catch(e){}
+  }
+  function drawChart(d){
+    const cv = document.getElementById('chart'); const ctx = cv.getContext('2d');
+    const W = cv.width, H = cv.height, pad = 30;
+    ctx.clearRect(0,0,W,H);
+    const series = [
+      {key:'temp', color:'#e74c3c', label:'อุณหภูมิ°C'},
+      {key:'hum',  color:'#2980b9', label:'ความชื้น%'},
+      {key:'soil', color:'#b9770e', label:'ดิน%'},
+      {key:'light',color:'#f1c40f', label:'แสงlux'}
+    ];
+    // scale
+    let mx = 0, mn = 1e9;
+    d.forEach(p => series.forEach(s => { mx = Math.max(mx, p[s.key]); mn = Math.min(mn, p[s.key]); }));
+    const range = (mx - mn) || 1;
+    const X = i => pad + i * (W - pad*2) / Math.max(d.length-1, 1);
+    const Y = v => H - pad - (v - mn) / range * (H - pad*2);
+    ctx.strokeStyle = '#e8efe9'; ctx.lineWidth = 1;
+    for(let i=0;i<5;i++){ const y = pad + i*(H-pad*2)/4; ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke(); }
+    series.forEach(s => {
+      ctx.strokeStyle = s.color; ctx.lineWidth = 2.2; ctx.beginPath();
+      d.forEach((p,i) => i ? ctx.lineTo(X(i),Y(p[s.key])) : ctx.moveTo(X(i),Y(p[s.key])));
+      ctx.stroke();
+    });
+    ctx.fillStyle = '#8aa093'; ctx.font = '11px Kanit';
+    for(let s of series){ ctx.fillStyle = s.color; ctx.fillRect(pad, 8, 10, 10); ctx.fillStyle = '#8aa093'; ctx.fillText(s.label, pad+14, 17); pad2 = pad; }
+  }
+  setInterval(refresh, 5000);
+  refresh();
+</script>
+</body>
+</html>

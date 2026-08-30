@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการโรงเรือน — Smart Farm</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+  * { font-family:'Kanit', sans-serif; margin:0; padding:0; box-sizing:border-box; }
+  :root{ --green:#2d6a4f; --green-dark:#1b4332; --gold:#c9a227; --cream:#f6faf5; --ink:#26312b; --muted:#8aa093; --red:#c0392b; }
+  body { background:var(--cream); color:var(--ink); }
+  .top { background:linear-gradient(135deg,#1b4332 0%,#2d6a4f 80%); color:#fff; padding:20px 26px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .top h1 { font-family:'Playfair Display', serif; font-size:22px; font-weight:600; }
+  .top .sub { letter-spacing:1px; font-size:12px; color:rgba(255,255,255,.7); text-transform:uppercase; }
+  .top a { color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.35); padding:7px 16px; border-radius:30px; font-size:13px; }
+  .wrap { padding:24px; max-width:900px; margin:0 auto; }
+  .box { background:#fff; border:1px solid #e4efe6; border-radius:18px; padding:20px; margin-bottom:18px; box-shadow:0 3px 14px rgba(35,80,50,.06); }
+  .box h3 { font-size:15px; margin-bottom:14px; color:var(--green-dark); }
+  .add form { display:flex; gap:10px; flex-wrap:wrap; }
+  .add input { padding:10px 13px; border:1px solid #e6dcc9; border-radius:10px; font-family:'Kanit'; font-size:14px; flex:1; min-width:150px; }
+  .btn { padding:10px 20px; border:none; border-radius:10px; font-family:'Kanit'; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn-add { background:linear-gradient(135deg,var(--green),var(--green-dark)); color:#fff; }
+  .btn-del { background:#fdecea; color:var(--red); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { padding:10px 12px; text-align:left; border-bottom:1px solid #eef4ef; }
+  th { color:var(--muted); font-weight:600; font-size:12px; }
+  .chip { font-size:11.5px; padding:3px 9px; border-radius:20px; background:#eef4ef; color:var(--muted); white-space:nowrap; }
+  .chip.on { background:var(--green-soft); color:var(--green-dark); }
+  .stat { color:var(--muted); font-size:12.5px; }
+  @media (max-width:640px){ .wrap{ padding:14px; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <div class="sub">🌱 Smart Farm</div>
+    <h1>จัดการโรงเรือน</h1>
+  </div>
+  <a href="/">🏠 หน้าโรงเรือน</a>
+</div>
+
+<div class="wrap">
+  <div class="box add">
+    <h3>➕ เพิ่มโรงเรือนใหม่</h3>
+    <form method="POST" action="/admin/add">
+      <input type="text" name="name" placeholder="ชื่อโรงเรือน (เช่น โรงเรือน C)" required>
+      <input type="text" name="location" placeholder="สถานที่/แปลง (ไม่บังคับ)">
+      <button class="btn btn-add" type="submit">เพิ่ม</button>
+    </form>
+  </div>
+
+  <div class="box">
+    <h3>🏭 รายการโรงเรือน ({{ stats|length }})</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <tr><th>#</th><th>ชื่อ</th><th>สถานที่</th><th>ข้อมูล</th><th>อุปกรณ์</th><th></th></tr>
+      {% for s in stats %}
+      <tr>
+        <td>{{ s.site['id'] }}</td>
+        <td><b>{{ s.site['name'] }}</b></td>
+        <td class="stat">{{ s.site['location'] or '—' }}</td>
+        <td class="stat">{{ s.count }} จุด</td>
+        <td>
+          <span class="chip {{ 'on' if s.ctl['pump'] else '' }}">🚿{{ 'ON' if s.ctl['pump'] else 'OFF' }}</span>
+          <span class="chip {{ 'on' if s.ctl['fan'] else '' }}">🌀{{ 'ON' if s.ctl['fan'] else 'OFF' }}</span>
+          <span class="chip {{ 'on' if s.ctl['light'] else '' }}">💡{{ 'ON' if s.ctl['light'] else 'OFF' }}</span>
+        </td>
+        <td>
+          <a href="/site/{{ s.site['id'] }}" class="btn btn-add" style="font-size:12px;padding:7px 12px;text-decoration:none">ดู</a>
+          <form method="POST" action="/admin/del/{{ s.site['id'] }}" style="display:inline" onsubmit="return confirm('ลบโรงเรือน {{ s.site['name'] }} และข้อมูลทั้งหมด?')">
+            <button class="btn btn-del" style="font-size:12px;padding:7px 12px">🗑 ลบ</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    </div>
+    <p class="stat" style="margin-top:10px">💡 ลบโรงเรือน = ลบข้อมูลเซ็นเซอร์ + สถานะอุปกรณ์ทั้งหมดของโรงเรือนนั้น</p>
+  </div>
+</div>
+</body>
+</html>

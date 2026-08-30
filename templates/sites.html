@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Farm — โรงเรือน</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+  * { font-family:'Kanit', sans-serif; margin:0; padding:0; box-sizing:border-box; }
+  :root{ --green:#2d6a4f; --green-dark:#1b4332; --green-soft:#d8f3dc; --gold:#c9a227; --cream:#f6faf5; --ink:#26312b; --muted:#8aa093; }
+  body { background:var(--cream); color:var(--ink); }
+  .top { background:linear-gradient(135deg,#1b4332 0%,#2d6a4f 80%); color:#fff; padding:22px 28px; display:flex;
+         align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .top .sub { letter-spacing:1px; font-size:12.5px; color:rgba(255,255,255,.7); text-transform:uppercase; }
+  .top h1 { font-family:'Playfair Display', serif; font-size:24px; font-weight:600; }
+  .top .act { display:flex; gap:10px; }
+  .top a { color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.35); padding:7px 16px; border-radius:30px; font-size:13.5px; }
+  .top a:hover { background:rgba(255,255,255,.12); }
+
+  .wrap { padding:24px 28px; max-width:1100px; margin:0 auto; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px; }
+  .card { background:#fff; border:1px solid #e4efe6; border-radius:20px; overflow:hidden; box-shadow:0 4px 18px rgba(35,80,50,.07); transition:.2s; }
+  .card:hover { transform:translateY(-3px); box-shadow:0 10px 26px rgba(35,80,50,.12); }
+  .card .head { background:linear-gradient(135deg,#2d6a4f,#1b4332); color:#fff; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; }
+  .card .head .nm { font-size:19px; font-weight:600; font-family:'Playfair Display', serif; }
+  .card .head .loc { font-size:12px; color:rgba(255,255,255,.7); }
+  .card .vals { padding:16px 18px; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .v { background:#f8fcf8; border:1px solid #eef4ef; border-radius:12px; padding:9px 12px; }
+  .v .l { font-size:11.5px; color:var(--muted); }
+  .v .n { font-size:19px; font-weight:700; color:var(--green-dark); font-family:'Playfair Display', serif; }
+  .v .n small { font-size:11px; color:var(--muted); font-weight:500; }
+  .card .open { display:block; margin:0 18px 16px; padding:10px; border-radius:12px; background:linear-gradient(135deg,var(--green),var(--green-dark));
+                color:#fff; text-align:center; text-decoration:none; font-weight:600; font-size:14px; }
+  .ctl-line { padding:0 18px 14px; display:flex; gap:8px; justify-content:center; }
+  .ctl-line .chip { font-size:11.5px; padding:4px 10px; border-radius:20px; background:#eef4ef; color:var(--muted); }
+  .ctl-line .chip.on { background:var(--green-soft); color:var(--green-dark); font-weight:600; }
+
+  @media (max-width:640px){ .wrap{ padding:14px; } .top{ padding:15px 18px; } .top h1{ font-size:19px; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <div class="sub">🌱 Smart Farm</div>
+    <h1>ระบบควบคุมโรงเรือนผัก</h1>
+  </div>
+  <div class="act">
+    <a href="/admin">⚙️ จัดการโรงเรือน</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="grid">
+    {% for c in cards %}
+    <div class="card">
+      <div class="head">
+        <div>
+          <div class="nm">{{ c.site['name'] }}</div>
+          <div class="loc">{{ c.site['location'] or '—' }}</div>
+        </div>
+        <div style="opacity:.8">🏭</div>
+      </div>
+      <div class="vals">
+        <div class="v"><div class="l">🌡️ อุณหภูมิ</div><div class="n">{{ c.last['temp'] if c.last else '-' }}<small>°C</small></div></div>
+        <div class="v"><div class="l">💧 ความชื้น</div><div class="n">{{ c.last['hum'] if c.last else '-' }}<small>%</small></div></div>
+        <div class="v"><div class="l">🪴 ดิน</div><div class="n">{{ c.last['soil'] if c.last else '-' }}<small>%</small></div></div>
+        <div class="v"><div class="l">☀️ แสง</div><div class="n">{{ c.last['light'] if c.last else '-' }}<small>lux</small></div></div>
+      </div>
+      <div class="ctl-line">
+        <span class="chip {{ 'on' if c.ctl['pump'] else '' }}">🚿 ปั๊ม {{ 'เปิด' if c.ctl['pump'] else 'ปิด' }}</span>
+        <span class="chip {{ 'on' if c.ctl['fan'] else '' }}">🌀 พัดลม {{ 'เปิด' if c.ctl['fan'] else 'ปิด' }}</span>
+        <span class="chip {{ 'on' if c.ctl['light'] else '' }}">💡 ไฟ {{ 'เปิด' if c.ctl['light'] else 'ปิด' }}</span>
+      </div>
+      <a class="open" href="/site/{{ c.site['id'] }}">📊 เปิด Dashboard →</a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+</body>
+</html>
