@@ -19,7 +19,7 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 DB = os.environ.get("DB_PATH", os.path.join(BASE, "smartfarm.db"))
 PORT = int(os.environ.get("PORT", 5052))
 SIM = os.environ.get("SIM", "1") == "1"
-SECRET = os.environ.get("SECRET_KEY", "smartfarm-poc-secret")
+SECRET = os.environ.get("SECRET_KEY") or "smartfarm-" + os.urandom(8).hex()
 
 app = Flask(__name__)
 app.secret_key = SECRET
